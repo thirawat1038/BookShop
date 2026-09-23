@@ -1,3 +1,3 @@
 id,name,price,stock
-b01,book01,150,50
-b02,book02,165,60
+b01,book01,150.0,50
+b02,book02,165.0,60
