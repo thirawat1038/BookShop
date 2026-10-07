@@ -16,7 +16,7 @@
 - toString(), equals(), hashCode() ถ้ามี
 - ตรวจสอบข้อมูล เช่น stock, price
 
-## อนันดา นามวงศ์ษา — Repository / Data Access
+## อนันดา นามวงศ์ษา — Repository / Data Access / GUI
 
 รับผิดชอบการจัดการข้อมูล
 
@@ -27,6 +27,7 @@
 - save() / saveAll()
 - delete() ถ้ามี
 - จัดการ List<Product> หรือแหล่งเก็บข้อมูล
+- GUI
 
 ## อนุชิต ฟักสุมณฑา — Service / Application Logic
 

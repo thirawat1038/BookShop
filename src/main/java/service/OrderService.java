@@ -9,12 +9,15 @@ import java.util.Optional;
 import model.Order;
 import model.OrderItem;
 import model.Product;
+import repository.OrderRepository;
 
 /**
- * AF(productService, orders)
+ * AF(productService, orders, repository)
  * OrderService จัดการการสั่งซื้อ: สร้างออเดอร์ ตัดสต๊อกสินค้า และเก็บรายการออเดอร์
  * โดย productService = ตัวจัดการสินค้าที่ใช้ค้นหาสินค้าและตัดสต๊อก
- *     orders = ออเดอร์ทั้งหมดที่สร้างสำเร็จแล้ว
+ *     orders = ออเดอร์ทั้งหมดที่สร้างสำเร็จแล้ว (อยู่ใน memory)
+ *     repository = ตัวที่ใช้โหลด/บันทึกข้อมูลจริงลงไฟล์ (เป็น null ได้ ถ้าต้องการใช้แบบ in-memory
+ *                  ล้วน ๆ เช่นตอนเทส ซึ่งจะเรียก save() ไม่ได้)
  * RI:
  *  - productService ห้ามเป็น null
  *  - orders ห้ามเป็น null และไม่มีสมาชิกที่เป็น null
@@ -24,6 +27,7 @@ import model.Product;
 public class OrderService {
     private final ProductService productService;
     private final List<Order> orders = new ArrayList<>();
+    private final OrderRepository repository;
 
     private void checkRep() {
         if (productService == null) {
@@ -57,7 +61,42 @@ public class OrderService {
             throw new IllegalArgumentException("productService ห้ามเป็น null");
         }
         this.productService = productService;
+        this.repository = null;
         checkRep();
+    }
+
+    /**
+     * สร้าง OrderService ที่ผูกกับ OrderRepository และโหลดออเดอร์ทั้งหมดจากไฟล์ทันที
+     * หมายเหตุ: การโหลดออเดอร์เก่ากลับมาจะ "ไม่" ตัดสต๊อกสินค้าซ้ำ เพราะถือว่าสต๊อกที่โหลดมา
+     * จาก ProductRepository นั้นเป็นค่าล่าสุดที่ถูกตัดไปแล้วตั้งแต่ตอนบันทึกครั้งก่อนอยู่แล้ว
+     *
+     * @param productService ตัวจัดการสินค้าที่จะใช้ ห้ามเป็น null
+     * @param repository     repository ที่จะใช้โหลด/บันทึกข้อมูลออเดอร์ ห้ามเป็น null
+     * @throws IllegalArgumentException ถ้า productService หรือ repository เป็น null
+     */
+    public OrderService(ProductService productService, OrderRepository repository) {
+        if (productService == null) {
+            throw new IllegalArgumentException("productService ห้ามเป็น null");
+        }
+        if (repository == null) {
+            throw new IllegalArgumentException("repository ห้ามเป็น null");
+        }
+        this.productService = productService;
+        this.repository = repository;
+        orders.addAll(repository.findAll());
+        checkRep();
+    }
+
+    /**
+     * บันทึกออเดอร์ทั้งหมดตอนนี้กลับลงไฟล์ ผ่าน repository ที่ผูกไว้
+     *
+     * @throws IllegalStateException ถ้า OrderService นี้สร้างแบบ in-memory (ไม่มี repository)
+     */
+    public void save() {
+        if (repository == null) {
+            throw new IllegalStateException("OrderService นี้ไม่ได้ผูกกับ repository จึงบันทึกไม่ได้");
+        }
+        repository.saveAll(orders);
     }
 
     /**

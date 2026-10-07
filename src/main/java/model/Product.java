@@ -23,6 +23,7 @@ public class Product {
     private double price;
     private int stock;
     private String imagePath;
+    private String color; // สีปกหนังสือแบบ hex เช่น #E57373 (null = ให้โปรแกรมสุ่มสีจาก id)
 
     /**
      * สร้าง Product ใหม่ โดยไม่ระบุรูปภาพ (imagePath จะเป็น null)
@@ -49,6 +50,15 @@ public class Product {
      * @throws IllegalArgumentException ถ้า id/name เป็น null หรือ price/stock ติดลบ
      */
     public Product(String id, String name, double price, int stock, String imagePath) {
+        this(id, name, price, stock, imagePath, null);
+    }
+
+    /**
+     * สร้าง Product ใหม่ พร้อมระบุรูปภาพและสีปก
+     *
+     * @param color รหัสสีแบบ hex เช่น "#E57373" หรือ "E57373" (เป็น null ได้ = ใช้สีที่สุ่มจาก id)
+     */
+    public Product(String id, String name, double price, int stock, String imagePath, String color) {
         // ตรวจสอบให้ครบทุกค่าก่อน แล้วค่อย assign พร้อมกันทีเดียวท้ายสุด
         // ทำแบบนี้เพื่อไม่ให้ checkRep() (เรียกท้ายสุด) ไปเจอ field ที่ยังตั้งค่าไม่ครบ
         // ระหว่างกลาง (ต่างจากตอนแรกที่เรียกผ่าน setter ทีละตัว ทำให้ field ยังไม่ครบตอนเช็ค)
@@ -64,6 +74,7 @@ public class Product {
         this.price = price;
         this.stock = stock;
         this.imagePath = imagePath;
+        this.color = normalizeColor(color);
         checkRep();
     }
 
@@ -140,6 +151,27 @@ public class Product {
     /**
      * @return path ของไฟล์รูปภาพสินค้า (null ถ้ายังไม่มีรูป)
      */
+    /** @return รหัสสีปกแบบ #RRGGBB หรือ null ถ้าไม่ได้กำหนด */
+    public String getColor() {
+        return color;
+    }
+
+    /** @param color รหัสสี hex เช่น "#E57373" (null/ว่าง = ใช้สีอัตโนมัติ, รูปแบบผิด = ข้าม) */
+    public void setColor(String color) {
+        this.color = normalizeColor(color);
+    }
+
+    private static String normalizeColor(String c) {
+        if (c == null) {
+            return null;
+        }
+        c = c.trim();
+        if (c.startsWith("#")) {
+            c = c.substring(1);
+        }
+        return c.matches("[0-9a-fA-F]{6}") ? "#" + c.toUpperCase() : null;
+    }
+
     public String getImagePath() {
         return imagePath;
     }
@@ -222,27 +254,29 @@ public class Product {
     }
 
     /**
-     * แปลง Product เป็น 1 บรรทัดของไฟล์ CSV รูปแบบ: id,name,price,stock,imagePath
+     * แปลง Product เป็น 1 บรรทัดของไฟล์ CSV รูปแบบ: id,name,price,stock,imagePath,color
      * ถ้า imagePath เป็น null จะเขียนเป็นช่องว่างแทน (ไม่ใช่คำว่า "null")
      *
      * @return บรรทัด CSV ที่แทนค่า Product นี้
      */
     public String toCsvLine() {
         String imagePart = (imagePath == null) ? "" : imagePath;
-        return id + "," + name + "," + price + "," + stock + "," + imagePart;
+        String colorPart = (color == null) ? "" : color;
+        return id + "," + name + "," + price + "," + stock + "," + imagePart + "," + colorPart;
     }
 
     /**
      * แปลง 1 บรรทัดจากไฟล์ CSV กลับมาเป็น Product object
      * รองรับทั้งบรรทัดเก่า (4 คอลัมน์ ไม่มี imagePath) และบรรทัดใหม่ (5 คอลัมน์)
      *
-     * @param line บรรทัด CSV รูปแบบ id,name,price,stock[,imagePath]
+     * @param line บรรทัด CSV รูปแบบ id,name,price,stock[,imagePath[,color]]
      * @return Product ที่แปลงมาจากบรรทัดนั้น
      */
     public static Product fromCsvLine(String line) {
         String[] p = line.split(",", -1);
         String imagePath = (p.length >= 5 && !p[4].isEmpty()) ? p[4] : null;
-        return new Product(p[0], p[1], Double.parseDouble(p[2]), Integer.parseInt(p[3]), imagePath);
+        String color = (p.length >= 6 && !p[5].isEmpty()) ? p[5] : null;
+        return new Product(p[0], p[1], Double.parseDouble(p[2]), Integer.parseInt(p[3]), imagePath, color);
     }
 
     /**
