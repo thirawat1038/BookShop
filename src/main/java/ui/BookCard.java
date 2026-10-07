@@ -154,20 +154,31 @@ final class BookCard extends JPanel {
 
         private void paintGenerated(Graphics2D g2, int w, int h) {
             // ใช้อัตราส่วนทองคำกระจายสี เพราะ id อย่าง b01, b02 มี hash ใกล้กันมาก
-            double frac = (product.getId().hashCode() * 0.6180339887) % 1.0;
-            float hue = (float) (frac < 0 ? frac + 1.0 : frac);
-            Color top = Color.getHSBColor(hue, 0.55f, 0.42f);
-            Color bottom = Color.getHSBColor((hue + 0.08f) % 1f, 0.65f, 0.80f);
-            g2.setPaint(new GradientPaint(0, 0, top, w, h, bottom));
+            Color top;
+            Color bottom;
+            Color textColor = Color.WHITE;
+            if (product.getColor() != null) {
+                // สีที่กำหนดเองใน Product (hex) -> ไล่จากเข้มกว่าเล็กน้อยไปสีที่กำหนด
+                bottom = Color.decode(product.getColor());
+                top = bottom.darker();
+                double lum = (0.299 * bottom.getRed() + 0.587 * bottom.getGreen() + 0.114 * bottom.getBlue()) / 255;
+                if (lum > 0.7) {
+                    textColor = new Color(0x222222); // สีอ่อนมาก -> ใช้ตัวหนังสือเข้ม
+                }
+            } else {
+                double frac = (product.getId().hashCode() * 0.6180339887) % 1.0;
+                float hue = (float) (frac < 0 ? frac + 1.0 : frac);
+                top = Color.getHSBColor(hue, 0.55f, 0.42f);
+                bottom = Color.getHSBColor((hue + 0.08f) % 1f, 0.65f, 0.80f);
+            }
+            g2.setColor(bottom); // สีเดียว ไม่ไล่เฉด
             g2.fillRect(0, 0, w, h);
 
             // ลายตกแต่งเล็กน้อยให้ไม่ดูโล่ง
-            g2.setColor(new Color(255, 255, 255, 38));
-            g2.fill(new Ellipse2D.Float(w * 0.35f, -h * 0.15f, w * 0.9f, w * 0.9f));
             g2.setColor(new Color(255, 255, 255, 60));
             g2.fillRect(0, h - 34, w, 2);
 
-            g2.setColor(Color.WHITE);
+            g2.setColor(textColor);
             TextBlock.drawLines(g2, product.getName(), Theme.font(Font.BOLD, 15f), 12, 28, w - 24, 5, true);
         }
     }

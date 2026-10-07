@@ -17,7 +17,7 @@ import model.Product;
  * ProductRepository จัดการอ่าน/เขียนข้อมูล Product ลงไฟล์ CSV จริง
  * โดย filePath = ตำแหน่งไฟล์ CSV ที่เก็บข้อมูลสินค้า (เช่น data/Products.csv)
  *
- * รูปแบบไฟล์ CSV: บรรทัดแรกเป็น header "id,name,price,stock,imagePath"
+ * รูปแบบไฟล์ CSV: บรรทัดแรกเป็น header "id,name,price,stock,imagePath,color"
  * บรรทัดถัดไปแต่ละบรรทัดคือ 1 Product ใช้ Product.toCsvLine()/fromCsvLine()
  * ที่เตรียมไว้ในคลาส Product อยู่แล้ว เพื่อไม่ให้ format การแปลงข้อมูลกระจัดกระจาย
  *
@@ -26,7 +26,7 @@ import model.Product;
  */
 public class ProductRepository implements Repository<Product, String> {
 
-    private static final String HEADER = "id,name,price,stock,imagePath";
+    private static final String HEADER = "id,name,price,stock,imagePath,color";
 
     private final Path filePath;
 

@@ -16,7 +16,7 @@
 - toString(), equals(), hashCode() ถ้ามี
 - ตรวจสอบข้อมูล เช่น stock, price
 
-## อนันดา นามวงศ์ษา — Repository / Data Access / GUI
+## อนันดา นามวงศ์ษา — Repository / Data Access
 
 รับผิดชอบการจัดการข้อมูล
 
@@ -27,7 +27,6 @@
 - save() / saveAll()
 - delete() ถ้ามี
 - จัดการ List<Product> หรือแหล่งเก็บข้อมูล
-- GUI
 
 ## อนุชิต ฟักสุมณฑา — Service / Application Logic
 
@@ -39,3 +38,15 @@
 - ค้นหา/กรองสินค้า
 - logic ที่เรียกใช้ Repository
 - เขียน Main / ทดลองการทำงาน
+
+## วิธีรันหน้า GUI (Swing)
+
+รันจาก root ของโปรเจกต์ (โฟลเดอร์ที่มี `data/`) และต้องคอมไพล์ด้วย UTF-8 เสมอ ไม่งั้นภาษาไทยในโค้ดจะเพี้ยน
+
+```
+javac -encoding UTF-8 -d out $(find src/main/java -name "*.java")
+java -Dfile.encoding=UTF-8 -cp out ui.BookShopApp
+```
+
+- ปกหนังสือ: ใส่ path รูปในคอลัมน์ที่ 5 ของ `data/Products.csv` (เช่น `data/covers/b03.jpg`) ถ้าไม่ใส่จะสร้างปกสีให้อัตโนมัติ
+- ฟอนต์ไทยเลือกอัตโนมัติใน `ui/Theme.java` (Leelawadee UI → Tahoma → Noto Sans Thai → ...)
