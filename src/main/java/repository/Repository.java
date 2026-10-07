@@ -36,4 +36,17 @@ public interface Repository<T, ID> {
      * (ฝั่ง Service จะเป็นคนตัดสินใจว่าจะ throw exception ต่อไหม)
      */
     T findById(ID id);
+
+    /**
+     * บันทึก 1 รายการ: ถ้ามีรหัสเดียวกันอยู่แล้วจะแทนที่ ถ้าไม่มีจะเพิ่มต่อท้าย
+     * แล้วเขียนกลับลงที่เก็บข้อมูล
+     */
+    void save(T item);
+
+    /**
+     * ลบ 1 รายการด้วยรหัส
+     *
+     * @return true ถ้าลบสำเร็จ, false ถ้าไม่พบรหัสนั้น
+     */
+    boolean delete(ID id);
 }
