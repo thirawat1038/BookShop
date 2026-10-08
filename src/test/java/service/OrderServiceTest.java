@@ -1,6 +1,7 @@
 package service;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -31,6 +32,12 @@ public class OrderServiceTest {
         test.testGetOrderById();
         test.testGetOrderByIdWhenNotFound();
         test.testGetAllOrdersIsUnmodifiable();
+
+        test.testGetOrdersByMemberIdOnlyReturnsThatMember();
+        test.testGetOrdersByMemberIdNoOrdersIsEmpty();
+        test.testGetOrdersByMemberIdNullIsEmpty();
+        test.testGetOrdersByMemberIdIsExactMatch();
+        test.testGetOrdersByMemberIdIsUnmodifiable();
 
         test.testGetTotalSalesEmptyIsZero();
         test.testGetTotalSalesMultipleOrders();
@@ -260,6 +267,58 @@ public class OrderServiceTest {
         OrderService os = new OrderService(newProductService());
         try {
             os.getAllOrders().add(new Order("O01", "M01", "2026-10-04"));
+            throw new AssertionError("ควร throw UnsupportedOperationException แต่ไม่ throw");
+        } catch (UnsupportedOperationException e) {
+            // ผ่าน
+        }
+    }
+
+    // ---------- Testing strategy: getOrdersByMemberId ----------
+    // Partition:
+    //  - สมาชิกมีหลายออเดอร์ปนกับของคนอื่น -> ได้เฉพาะของคนนั้น
+    //  - สมาชิกยังไม่เคยสั่ง -> list ว่าง
+    //  - memberId เป็น null -> list ว่าง
+    //  - รหัสต่างกันแค่ตัวพิมพ์เล็ก/ใหญ่ -> ถือว่าคนละคน
+    //  - list ที่ได้แก้ไขไม่ได้
+
+    void testGetOrdersByMemberIdOnlyReturnsThatMember() {
+        OrderService os = new OrderService(newProductService());
+        os.createOrder("O01", "m01", "2026-10-04", qty("b01", 1));
+        os.createOrder("O02", "m02", "2026-10-05", qty("b02", 1));
+        os.createOrder("O03", "m01", "2026-10-06", qty("b01", 2));
+
+        List<Order> result = os.getOrdersByMemberId("m01");
+        assertEquals(2, result.size());
+        assertEquals("O01", result.get(0).getOrderId());
+        assertEquals("O03", result.get(1).getOrderId());
+    }
+
+    void testGetOrdersByMemberIdNoOrdersIsEmpty() {
+        OrderService os = new OrderService(newProductService());
+        os.createOrder("O01", "m01", "2026-10-04", qty("b01", 1));
+
+        assertEquals(0, os.getOrdersByMemberId("m99").size());
+    }
+
+    void testGetOrdersByMemberIdNullIsEmpty() {
+        OrderService os = new OrderService(newProductService());
+        os.createOrder("O01", "m01", "2026-10-04", qty("b01", 1));
+
+        assertEquals(0, os.getOrdersByMemberId(null).size());
+    }
+
+    void testGetOrdersByMemberIdIsExactMatch() {
+        OrderService os = new OrderService(newProductService());
+        os.createOrder("O01", "M01", "2026-10-04", qty("b01", 1));
+
+        assertEquals(0, os.getOrdersByMemberId("m01").size());
+        assertEquals(1, os.getOrdersByMemberId("M01").size());
+    }
+
+    void testGetOrdersByMemberIdIsUnmodifiable() {
+        OrderService os = new OrderService(newProductService());
+        try {
+            os.getOrdersByMemberId("m01").add(new Order("O01", "m01", "2026-10-04"));
             throw new AssertionError("ควร throw UnsupportedOperationException แต่ไม่ throw");
         } catch (UnsupportedOperationException e) {
             // ผ่าน

@@ -23,11 +23,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
+import model.Member;
 import model.Order;
 import model.OrderItem;
 import model.Product;
+import repository.MemberRepository;
 import repository.OrderRepository;
 import repository.ProductRepository;
+import service.MemberService;
 import service.OrderService;
 import service.ProductService;
 
@@ -43,18 +46,20 @@ public class BookShopApp extends JFrame {
 
     private static final String PRODUCT_FILE = "data/Products.csv";
     private static final String ORDER_FILE = "data/Orders.csv";
+    private static final String MEMBER_FILE = "data/member.csv";
     private static final int ROW_SIZE = 6;
     // ระบบสมาชิก / ชำระเงิน ยังทำไม่เสร็จ -> ปิดไว้ก่อน (เปลี่ยนเป็น true เมื่อพร้อมใช้งาน)
-    private static final boolean LOGIN_ENABLED = false;
-    private static final boolean CHECKOUT_ENABLED = false;
+    private static final boolean LOGIN_ENABLED = true;
+    private static final boolean CHECKOUT_ENABLED = true;
     private static final String[] TABS = {"หนังสือ", "อีบุ๊ก", "นิยายสาร", "อีแมกกาซีน"};
 
     private final ProductService productService;
     private final OrderService orderService;
+    private final MemberService memberService;
 
     // ตะกร้าเก็บเป็น OrderItem ตัวเดียวกับที่ใช้สร้าง Order จริง ยังไม่กระทบสต๊อกจนกว่าจะชำระเงิน
     private final List<OrderItem> cart = new ArrayList<>();
-    private String loggedInMember = null;
+    private Member loggedInMember = null;
 
     private PillButton loginButton;
     private LinkButton cartNavButton;
@@ -73,6 +78,7 @@ public class BookShopApp extends JFrame {
         this.productService = new ProductService(productRepository);
         OrderRepository orderRepository = new OrderRepository(ORDER_FILE, productRepository);
         this.orderService = new OrderService(productService, orderRepository);
+        this.memberService = loadMemberService();
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -397,7 +403,7 @@ public class BookShopApp extends JFrame {
         String date = LocalDate.now().toString();
 
         try {
-            Order order = orderService.createOrder(orderId, loggedInMember, date, productQuantities);
+            Order order = orderService.createOrder(orderId, loggedInMember.getId(), date, productQuantities);
             productService.save();
             orderService.save();
 
@@ -418,7 +424,12 @@ public class BookShopApp extends JFrame {
     }
 
     private void showHistoryDialog() {
-        JDialog dialog = new JDialog(this, "ประวัติคำสั่งซื้อ", true);
+        // ดูได้เฉพาะประวัติของสมาชิกที่เข้าสู่ระบบ ถ้ายังไม่ได้เข้าสู่ระบบให้ล็อกอินก่อน
+        if (loggedInMember == null && !promptLogin()) {
+            return;
+        }
+        String memberId = loggedInMember.getId();
+        JDialog dialog = new JDialog(this, "ประวัติคำสั่งซื้อของ " + loggedInMember.getUsername(), true);
 
         DefaultTableModel model = new DefaultTableModel(
                 new Object[]{"เลขที่ออเดอร์", "รหัสสมาชิก", "วันที่", "ยอดรวม (บาท)"}, 0) {
@@ -427,7 +438,7 @@ public class BookShopApp extends JFrame {
                 return false;
             }
         };
-        for (Order order : orderService.getAllOrders()) {
+        for (Order order : orderService.getOrdersByMemberId(memberId)) {
             model.addRow(new Object[]{order.getOrderId(), order.getMemberId(), order.getDate(),
                     String.format(Locale.US, "%,.2f", order.getTotal())});
         }
@@ -462,7 +473,7 @@ public class BookShopApp extends JFrame {
         });
 
         JScrollPane tableScroll = new JScrollPane(table);
-        tableScroll.setBorder(BorderFactory.createTitledBorder("คำสั่งซื้อทั้งหมด"));
+        tableScroll.setBorder(BorderFactory.createTitledBorder("คำสั่งซื้อของฉัน"));
         JScrollPane detailScroll = new JScrollPane(detail);
         detailScroll.setBorder(BorderFactory.createTitledBorder("รายละเอียดออเดอร์"));
         JSplitPane split = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableScroll, detailScroll);
@@ -507,7 +518,7 @@ public class BookShopApp extends JFrame {
             return;
         }
         Object[] options = {"ออกจากระบบ", "ยกเลิก"};
-        int choice = JOptionPane.showOptionDialog(this, "ต้องการออกจากระบบสมาชิก " + loggedInMember + " ใช่หรือไม่",
+        int choice = JOptionPane.showOptionDialog(this, "ต้องการออกจากระบบสมาชิก " + loggedInMember.getUsername() + " ใช่หรือไม่",
                 "ออกจากระบบ", JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, options[1]);
         if (choice == 0) {
             loggedInMember = null;
@@ -515,20 +526,117 @@ public class BookShopApp extends JFrame {
         }
     }
 
-    /** @return true ถ้ากรอกรหัสสมาชิกสำเร็จ */
-    private boolean promptLogin() {
-        String id = (String) JOptionPane.showInputDialog(this, "กรอกรหัสสมาชิก (เช่น M01)",
-                "เข้าสู่ระบบ / สมัครสมาชิก", JOptionPane.PLAIN_MESSAGE, null, null, null);
-        if (id == null || id.isBlank()) {
-            return false;
+    /** โหลดสมาชิกจาก member.csv ถ้าไฟล์ผิดรูปแบบจะแจ้งเตือนแล้วปิดโปรแกรม (ไม่เขียนทับไฟล์เดิม) */
+    private static MemberService loadMemberService() {
+        try {
+            return new MemberService(new MemberRepository(MEMBER_FILE));
+        } catch (RuntimeException e) {
+            JOptionPane.showMessageDialog(null,
+                    "อ่านไฟล์สมาชิก " + MEMBER_FILE + " ไม่สำเร็จ\n" + e.getMessage(),
+                    "ผิดพลาด", JOptionPane.ERROR_MESSAGE);
+            System.exit(1);
+            return null;
         }
-        loggedInMember = id.trim();
-        updateLoginButton();
-        return true;
+    }
+
+    /** @return true ถ้าเข้าสู่ระบบ (หรือสมัครแล้วเข้าสู่ระบบ) สำเร็จ */
+    private boolean promptLogin() {
+        JTextField usernameField = new JTextField(18);
+        JPasswordField passwordField = new JPasswordField(18);
+        JPanel form = new JPanel(new GridLayout(0, 1, 0, 6));
+        form.add(new JLabel("ชื่อผู้ใช้ (username)"));
+        form.add(usernameField);
+        form.add(new JLabel("รหัสผ่าน"));
+        form.add(passwordField);
+
+        Object[] options = {"เข้าสู่ระบบ", "สมัครสมาชิก", "ยกเลิก"};
+        while (true) {
+            int choice = JOptionPane.showOptionDialog(this, form, "เข้าสู่ระบบ / สมัครสมาชิก",
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+            if (choice == 1) {
+                if (promptRegister()) {
+                    return true;
+                }
+                continue;
+            }
+            if (choice != 0) {
+                return false; // ยกเลิก หรือปิดหน้าต่าง
+            }
+            String username = usernameField.getText().trim();
+            String password = new String(passwordField.getPassword());
+            Optional<Member> member = memberService.login(username, password);
+            if (member.isPresent()) {
+                loggedInMember = member.get();
+                updateLoginButton();
+                return true;
+            }
+            JOptionPane.showMessageDialog(this, "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง",
+                    "เข้าสู่ระบบไม่สำเร็จ", JOptionPane.ERROR_MESSAGE);
+            passwordField.setText("");
+        }
+    }
+
+    /** แสดงฟอร์มสมัครสมาชิก @return true ถ้าสมัครสำเร็จ (และเข้าสู่ระบบให้อัตโนมัติ) */
+    private boolean promptRegister() {
+        JTextField usernameField = new JTextField(18);
+        JPasswordField passwordField = new JPasswordField(18);
+        JPasswordField confirmField = new JPasswordField(18);
+        JTextField addressField = new JTextField(18);
+        JTextField phoneField = new JTextField(18);
+
+        JPanel form = new JPanel(new GridLayout(0, 1, 0, 6));
+        form.add(new JLabel("ชื่อผู้ใช้ (6-32 ตัวอักษร)"));
+        form.add(usernameField);
+        form.add(new JLabel("รหัสผ่าน"));
+        form.add(passwordField);
+        form.add(new JLabel("ยืนยันรหัสผ่าน"));
+        form.add(confirmField);
+        form.add(new JLabel("ที่อยู่ (ห้ามมีเครื่องหมาย ,)"));
+        form.add(addressField);
+        form.add(new JLabel("เบอร์โทร (ตัวเลข 10 หลัก)"));
+        form.add(phoneField);
+
+        while (true) {
+            int choice = JOptionPane.showConfirmDialog(this, form, "สมัครสมาชิก",
+                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            if (choice != JOptionPane.OK_OPTION) {
+                return false;
+            }
+            String newId = memberService.nextMemberId();
+            Member member;
+            try {
+                member = memberService.register(
+                        newId,
+                        usernameField.getText().trim(),
+                        new String(passwordField.getPassword()),
+                        new String(confirmField.getPassword()),
+                        addressField.getText().trim(),
+                        phoneField.getText().trim());
+            } catch (IllegalArgumentException e) {
+                JOptionPane.showMessageDialog(this, "สมัครสมาชิกไม่สำเร็จ: " + e.getMessage(),
+                        "ผิดพลาด", JOptionPane.ERROR_MESSAGE);
+                continue; // ให้แก้ข้อมูลในฟอร์มเดิมแล้วลองใหม่
+            }
+            try {
+                memberService.save();
+            } catch (RuntimeException e) {
+                // เขียนไฟล์ไม่สำเร็จ: เอาสมาชิกที่เพิ่งเพิ่มออกจากหน่วยความจำ จะได้ไม่ค้างโดยไม่ลงไฟล์
+                memberService.removeMember(newId);
+                JOptionPane.showMessageDialog(this, "บันทึกสมาชิกไม่สำเร็จ: " + e.getMessage(),
+                        "ผิดพลาด", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+            loggedInMember = member;
+            updateLoginButton();
+            JOptionPane.showMessageDialog(this,
+                    "สมัครสมาชิกสำเร็จ รหัสสมาชิกของคุณคือ " + member.getId(),
+                    "สำเร็จ", JOptionPane.INFORMATION_MESSAGE);
+            return true;
+        }
     }
 
     private void updateLoginButton() {
-        loginButton.setText(loggedInMember == null ? "เข้าสู่ระบบ / สมัครสมาชิก" : "สมาชิก: " + loggedInMember);
+        loginButton.setText(loggedInMember == null ? "เข้าสู่ระบบ / สมัครสมาชิก" : "สมาชิก: " + loggedInMember.getUsername());
     }
 
     private void selectTab(int index) {

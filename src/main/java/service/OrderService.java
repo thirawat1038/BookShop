@@ -169,6 +169,24 @@ public class OrderService {
     }
 
     /**
+      ออเดอร์ทั้งหมดของสมาชิกคนเดียว เรียงตามลำดับที่สั่ง (แก้ไขจากภายนอกไม่ได้)
+      memberId รหัสสมาชิกที่ต้องการดูออเดอร์ เทียบแบบตรงตัว
+      list ว่างถ้าสมาชิกคนนั้นยังไม่เคยสั่ง หรือ memberId เป็น null
+     */
+    public List<Order> getOrdersByMemberId(String memberId) {
+        List<Order> result = new ArrayList<>();
+        if (memberId == null) {
+            return Collections.unmodifiableList(result);
+        }
+        for (Order order : orders) {
+            if (memberId.equals(order.getMemberId())) {
+                result.add(order);
+            }
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    /**
       ยอดขายรวมของทุกออเดอร์ ถ้ายังไม่มีออเดอร์คืน 0.0
      */
     public double getTotalSales() {
