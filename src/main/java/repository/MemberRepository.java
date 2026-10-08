@@ -12,33 +12,12 @@ import java.util.List;
 
 import model.Member;
 
-/**
- * AF(filePath)
- * MemberRepository จัดการอ่าน/เขียนข้อมูล Member ลงไฟล์ CSV จริง
- * โดย filePath = ตำแหน่งไฟล์ CSV ที่เก็บข้อมูลสมาชิก (เช่น data/member.csv)
- *
- * รูปแบบไฟล์ CSV: บรรทัดแรกเป็น header "id,username,password,address,phone"
- * บรรทัดถัดไปแต่ละบรรทัดคือ 1 Member ใช้ Member.toCsvLine()/fromCsvLine()
- * ที่เตรียมไว้ในคลาส Member อยู่แล้ว เพื่อไม่ให้ format การแปลงข้อมูลกระจัดกระจาย
- *
- * หมายเหตุ: ถ้าบรรทัดไหนในไฟล์ผิดรูปแบบ จะ throw RuntimeException พร้อมบอกเลขบรรทัด
- * (ไม่แสดงเนื้อหาบรรทัดในข้อความ error เพราะมีรหัสผ่านอยู่ในนั้น)
- *
- * RI:
- *  - filePath ห้ามเป็น null หรือว่าง
- */
 public class MemberRepository implements Repository<Member, String> {
 
     private static final String HEADER = "id,username,password,address,phone";
 
     private final Path filePath;
 
-    /**
-     * สร้าง MemberRepository ที่ผูกกับไฟล์ CSV ตามที่ระบุ
-     * ถ้าไฟล์ยังไม่มีอยู่ จะถูกสร้างขึ้นใหม่ (พร้อม header) ตอนเรียก saveAll()/save() ครั้งแรก
-     *
-     * @param filePath ตำแหน่งไฟล์ CSV ห้ามเป็น null หรือว่าง
-     */
     public MemberRepository(String filePath) {
         if (filePath == null || filePath.isBlank()) {
             throw new IllegalArgumentException("filePath ห้ามเป็น null หรือว่าง");
@@ -116,12 +95,6 @@ public class MemberRepository implements Repository<Member, String> {
         return null;
     }
 
-    /**
-     * ค้นหาสมาชิกด้วย username (ใช้ตอน login) เทียบแบบตรงตัว ตัวพิมพ์เล็ก/ใหญ่มีผล
-     *
-     * @param username ชื่อผู้ใช้ที่ต้องการหา
-     * @return Member ที่ username ตรงกัน หรือ null ถ้าไม่พบ (หรือ username เป็น null)
-     */
     public Member findByUsername(String username) {
         if (username == null) {
             return null;

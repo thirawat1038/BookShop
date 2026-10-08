@@ -19,13 +19,6 @@ public class OrderTest {
         System.out.println("ทดสอบผ่านทั้งหมด");
     }
 
-    // ---------- Testing strategy: constructor ----------
-    // Partition:
-    //  - ค่าปกติครบทั้ง 3 ตัว -> สร้างได้ items ว่างเปล่า
-    //  - orderId เป็น null -> throw
-    //  - memberId เป็น null -> throw
-    //  - date เป็น null -> throw
-
     void testConstructorValid() {
         Order order = new Order("O001", "M001", "2026-10-04");
         assertEquals("O001", order.getOrderId());

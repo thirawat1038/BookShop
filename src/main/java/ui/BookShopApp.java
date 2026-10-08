@@ -33,15 +33,6 @@ import repository.ProductRepository;
 import service.MemberService;
 import service.OrderService;
 import service.ProductService;
-
-/**
- * หน้าต่าง GUI หลักของ BookShop "Online Book Ordering System" (Swing)
- *
- * หน้าตาตามแบบ: หัวเรื่องกลาง + ปุ่มเข้าสู่ระบบ / แท็บหมวด / ช่องค้นหา / แถวหนังสือแนะนำ
- * ข้อมูลและ logic ธุรกิจทั้งหมดยังเรียกผ่าน ProductService / OrderService เดิม (ไม่แก้ชั้น model/service)
- *
- * รันจาก root ของโปรเจกต์ (โฟลเดอร์ที่มี data/ อยู่) ไม่งั้นจะหาไฟล์ CSV ไม่เจอ
- */
 public class BookShopApp extends JFrame {
 
     private static final String PRODUCT_FILE = "data/Products.csv";
@@ -96,9 +87,7 @@ public class BookShopApp extends JFrame {
         updateCartButton();
     }
 
-    // ==================================================================
     // ส่วนหัว + แท็บ + ค้นหา
-    // ==================================================================
 
     private JComponent buildHeader() {
         JPanel header = new JPanel(new BorderLayout());
@@ -207,9 +196,7 @@ public class BookShopApp extends JFrame {
         return body;
     }
 
-    // ==================================================================
     // สร้างรายการหนังสือ
-    // ==================================================================
 
     private void rebuildSections() {
         String query = searchField == null ? "" : searchField.getText().trim().toLowerCase(Locale.ROOT);
@@ -260,9 +247,7 @@ public class BookShopApp extends JFrame {
         sectionsPanel.add(row);
     }
 
-    // ==================================================================
     // ตะกร้า / สั่งซื้อ
-    // ==================================================================
 
     private void addToCart(Product product) {
         int alreadyInCart = 0;
@@ -501,9 +486,7 @@ public class BookShopApp extends JFrame {
         return table;
     }
 
-    // ==================================================================
     // เข้าสู่ระบบ
-    // ==================================================================
 
     private void onLoginClicked() {
         if (LOGIN_ENABLED) {
@@ -650,11 +633,7 @@ public class BookShopApp extends JFrame {
             centerLayout.show(centerCards, "shop");
         }
     }
-
-    // ==================================================================
-    // หน้ารายละเอียดหนังสือ
-    // ==================================================================
-
+      // หน้ารายละเอียดหนังสือ
     private void showDetail(Product product) {
         // ใช้ข้อมูลล่าสุด (สต๊อกอาจเปลี่ยนหลังชำระเงิน)
         Product p = productService.getAllProducts().stream()
@@ -739,9 +718,7 @@ public class BookShopApp extends JFrame {
         centerLayout.show(centerCards, "detail");
     }
 
-    // ==================================================================
     // Component ตกแต่งเอง
-    // ==================================================================
 
     /** แถบแท็บ: หนังสือ • อีบุ๊ก • นิยายสาร • อีแมกกาซีน (แท็บที่เลือกมีเส้นใต้หนา) */
     private final class TabBar extends JComponent {
@@ -956,37 +933,31 @@ public class BookShopApp extends JFrame {
 
     /** panel ที่ยืดตามความกว้างของ viewport เพื่อให้การ์ดขึ้นบรรทัดใหม่ตามขนาดหน้าต่าง */
     private static final class ScrollablePanel extends JPanel implements Scrollable {
-        @Override
         public Dimension getPreferredScrollableViewportSize() {
             return getPreferredSize();
         }
-
-        @Override
         public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
             return 18;
         }
 
-        @Override
         public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
             return Math.max(40, (int) (visibleRect.height * 0.9));
         }
 
-        @Override
         public boolean getScrollableTracksViewportWidth() {
             return true;
         }
 
-        @Override
         public boolean getScrollableTracksViewportHeight() {
             return false;
         }
     }
 
-    // ==================================================================
+    // main
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            Theme.install(); // ต้องเรียกก่อนสร้างหน้าต่าง: ตั้งฟอนต์ไทย + anti-alias
+            Theme.install(); //เปิดโปรแกรมแล้วสร้างหน้าต่าง
             new BookShopApp().setVisible(true);
         });
     }

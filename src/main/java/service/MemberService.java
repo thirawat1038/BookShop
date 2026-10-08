@@ -8,36 +8,17 @@ import java.util.Optional;
 import model.Member;
 import repository.MemberRepository;
 
-/**
- * AF(members, repository)
- * MemberService จัดการ logic เรื่องสมาชิก: สมัคร, เข้าสู่ระบบ, ค้นหา, ลบ
- * โดย members    = รายการสมาชิกทั้งหมดที่โหลดไว้ในหน่วยความจำ
- *     repository = ตัวอ่าน/เขียนไฟล์ member.csv (เป็น null ได้ = ทำงานในหน่วยความจำอย่างเดียว)
- *
- * การเปลี่ยนแปลง (register/removeMember) จะยังไม่ลงไฟล์จนกว่าจะเรียก save()
- * เหมือนกับ ProductService
- *
- * RI:
- *  - members ห้ามเป็น null และห้ามมีสมาชิกเป็น null
- *  - id ของสมาชิกแต่ละคนห้ามซ้ำกัน
- *  - username ของสมาชิกแต่ละคนห้ามซ้ำกัน
- */
 public class MemberService {
 
     private final List<Member> members = new ArrayList<>();
     private final MemberRepository repository;
 
-    /** สร้าง MemberService แบบไม่ผูกไฟล์ (เริ่มว่าง ใช้ในเทสต์) */
+    // MemberServiceใช้เทสต์ 
     public MemberService() {
         this.repository = null;
         checkRep();
     }
 
-    /**
-     * สร้าง MemberService ที่โหลดสมาชิกจากไฟล์ผ่าน repository
-     *
-     * @param repository ห้ามเป็น null
-     */
     public MemberService(MemberRepository repository) {
         if (repository == null) {
             throw new IllegalArgumentException("repository ห้ามเป็น null");
@@ -67,19 +48,12 @@ public class MemberService {
         }
     }
 
-    /** บันทึกสมาชิกทั้งหมดลงไฟล์ (ไม่ทำอะไรถ้าสร้างแบบไม่ผูกไฟล์) */
     public void save() {
         if (repository != null) {
             repository.saveAll(members);
         }
     }
 
-    /**
-     * สมัครสมาชิกใหม่
-     *
-     * @throws IllegalArgumentException ถ้ารหัสผ่านไม่ตรงกัน, ข้อมูลผิดเงื่อนไขของ Member,
-     *                                  หรือ id / username ซ้ำกับที่มีอยู่
-     */
     public Member register(String id, String username, String password,
                            String confirmPassword, String address, String phone) {
         if (confirmPassword == null || !confirmPassword.equals(password)) {
@@ -97,11 +71,6 @@ public class MemberService {
         return member;
     }
 
-    /**
-     * เข้าสู่ระบบ
-     *
-     * @return สมาชิกที่ username และรหัสผ่านถูกต้อง หรือ Optional.empty() ถ้าไม่ถูก (หรือส่ง null มา)
-     */
     public Optional<Member> login(String username, String password) {
         if (username == null || password == null) {
             return Optional.empty();
@@ -113,12 +82,6 @@ public class MemberService {
         return Optional.empty();
     }
 
-    /**
-     * สร้างรหัสสมาชิกใหม่ที่ยังไม่ซ้ำ ต่อจากเลขสูงสุดของรหัสรูปแบบ m + ตัวเลข เช่น m01, m02 -> m03
-     * (รหัสที่ไม่ตรงรูปแบบนี้จะถูกข้าม ถ้ายังไม่มีสมาชิกเลยจะได้ m01)
-     *
-     * @return รหัสสมาชิกใหม่ที่ไม่ซ้ำกับสมาชิกคนใดในระบบ
-     */
     public String nextMemberId() {
         int max = 0;
         for (Member member : members) {

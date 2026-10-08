@@ -42,18 +42,6 @@ public class MemberTest {
 
         System.out.println("ทดสอบผ่านทั้งหมด");
     }
-
-    // ---------- Testing strategy ----------
-    // แต่ละ field มี partition ตามกฎ (RI) ที่ตั้งไว้:
-    //  - id: ปกติ / null / ว่าง
-    //  - username: ยาว 5 (สั้นไป) / 6 (ขอบล่าง ผ่าน) / 32 (ขอบบน ผ่าน) / 33 (ยาวไป) / null
-    //  - password, address: ปกติ / null / ว่าง
-    //  - address: มี , -> ต้องปฏิเสธ (กัน CSV พัง)
-    //  - phone: 10 หลัก (ผ่าน) / 9 / 11 / มีตัวอักษร / มีขีด / null
-    //  - checkPassword: ถูก / ผิด / null
-    //  - equals/hashCode: เทียบด้วย id
-    //  - CSV: round-trip และจำนวนคอลัมน์ผิด
-
     private Member valid() {
         return new Member("M001", "somchai01", "1234", "123 Sukhumvit Bangkok", "0812345678");
     }

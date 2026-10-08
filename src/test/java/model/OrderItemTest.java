@@ -14,14 +14,6 @@ public class OrderItemTest {
         System.out.println("ทดสอบผ่านทั้งหมด");
     }
 
-    // ---------- Testing strategy ----------
-    // Partition:
-    //  - product ปกติ, quantity ปกติ (คำนวณ subtotal ถูกไหม)
-    //  - price เป็นทศนิยม (เช็คการคูณไม่คลาดเคลื่อน)
-    //  - product เป็น null -> throw
-    //  - quantity เป็น 0 -> throw
-    //  - quantity ติดลบ -> throw
-
     void testConstructorValid() {
         Product p = new Product("P001", "น้ำดื่ม", 10.0, 50);
         OrderItem item = new OrderItem(p, 3);

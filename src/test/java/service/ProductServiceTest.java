@@ -28,13 +28,8 @@ public class ProductServiceTest {
 
         test.testGetAllProductsIsUnmodifiable();
 
-        System.out.println("ทดสอบผ่านทั้งหมด");
+        System.out.println("ทดสอบผ่าน");
     }
-
-    // ---------- Testing strategy: calculateTotalStockValue ----------
-    // Partition:
-    //  - มีสินค้าหลายชิ้น -> ผลรวมของ (ราคา x stock) ทุกชิ้น
-    //  - ไม่มีสินค้าเลย -> 0.0
 
     void testCalculateTotalStockValue() {
         ProductService service = new ProductService();
@@ -48,12 +43,6 @@ public class ProductServiceTest {
         ProductService service = new ProductService();
         assertEquals(0.0, service.calculateTotalStockValue());
     }
-
-    // ---------- Testing strategy: hasProductOutOfStock ----------
-    // Partition:
-    //  - มีสินค้าที่ stock = 0 อย่างน้อย 1 ชิ้น -> true
-    //  - ทุกชิ้น stock > 0 -> false
-    //  - ไม่มีสินค้าเลย -> false
 
     void testHasProductOutOfStock() {
         ProductService service = new ProductService();
@@ -74,11 +63,6 @@ public class ProductServiceTest {
         assertEquals(false, service.hasProductOutOfStock());
     }
 
-    // ---------- Testing strategy: getProductById ----------
-    // Partition:
-    //  - id ที่มีอยู่ -> เจอสินค้านั้น
-    //  - id ที่ไม่มีอยู่ -> Optional.empty()
-
     void testGetProductById() {
         ProductService service = new ProductService();
         Product book = new Product("b01", "book01", 150.0, 50);
@@ -96,12 +80,6 @@ public class ProductServiceTest {
         Optional<Product> result = service.getProductById("b99");
         assertEquals(true, result.isEmpty());
     }
-
-    // ---------- Testing strategy: addProduct ----------
-    // Partition:
-    //  - สินค้าปกติ -> เพิ่มได้ และค้นเจอ
-    //  - null -> throw
-    //  - id ซ้ำกับที่มีอยู่ -> throw และของเดิมไม่เปลี่ยน
 
     void testAddProduct() {
         ProductService service = new ProductService();
@@ -134,11 +112,6 @@ public class ProductServiceTest {
             assertEquals("book01", service.getProductById("b01").get().getName());
         }
     }
-
-    // ---------- Testing strategy: removeProduct ----------
-    // Partition:
-    //  - id ที่มีอยู่ -> ถูกลบออก
-    //  - id ที่ไม่มีอยู่ -> ไม่มีอะไรเปลี่ยน
 
     void testRemoveProduct() {
         ProductService service = new ProductService();

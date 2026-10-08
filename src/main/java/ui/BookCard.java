@@ -15,10 +15,6 @@ import java.io.File;
 import java.util.Locale;
 import java.util.function.Consumer;
 
-/**
- * การ์ดหนังสือ 1 เล่ม: ปก / ชื่อ / คงเหลือ / หมวด / ราคา / ปุ่มตะกร้า (วงกลมสีฟ้า)
- * ถ้าสินค้าไม่มีรูป (imagePath ว่างหรือหาไฟล์ไม่เจอ) จะสร้างปกสีไล่เฉดจากชื่อหนังสือให้อัตโนมัติ
- */
 final class BookCard extends JPanel {
 
     static final int CARD_W = 130;
@@ -57,17 +53,13 @@ final class BookCard extends JPanel {
         priceRow.add(cartButton, BorderLayout.EAST);
         add(priceRow);
 
-        // คลิกที่ปกหรือชื่อหนังสือ -> เปิดหน้ารายละเอียด
+       
         for (JComponent c : new JComponent[]{cover, nameBlock}) {
             onClick(c, () -> onOpen.accept(product));
             c.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
     }
 
-    /**
-     * ทำงานเมื่อ "ปล่อยเมาส์" ภายในคอมโพเนนต์ (เหมือนปุ่มจริง)
-     * ไม่ใช้ mouseClicked เพราะ Swing จะไม่ยิง event ถ้าเมาส์ขยับแม้ 1 พิกเซลระหว่างกด-ปล่อย ทำให้ "กดไม่ค่อยติด"
-     */
     static void onClick(JComponent c, Runnable action) {
         c.addMouseListener(new MouseAdapter() {
             @Override
@@ -90,9 +82,7 @@ final class BookCard extends JPanel {
         return getPreferredSize();
     }
 
-    // ------------------------------------------------------------------
     // ปกหนังสือ
-    // ------------------------------------------------------------------
     static final class Cover extends JComponent {
         private final Product product;
         private final int coverW;
@@ -183,9 +173,7 @@ final class BookCard extends JPanel {
         }
     }
 
-    // ------------------------------------------------------------------
     // ปุ่มตะกร้าวงกลม (วาดไอคอนเอง ไม่พึ่งฟอนต์ emoji)
-    // ------------------------------------------------------------------
     static final class CartButton extends JButton {
         private final boolean enabledLook;
 

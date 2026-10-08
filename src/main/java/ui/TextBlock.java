@@ -1,5 +1,4 @@
 package ui;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.font.LineBreakMeasurer;
@@ -10,11 +9,6 @@ import java.text.AttributedString;
 import java.text.BreakIterator;
 import java.util.Locale;
 
-/**
- * ข้อความหลายบรรทัดที่วาดด้วย TextLayout (จัดวางอักษรไทยซ้อนสระ/วรรณยุกต์ถูกต้อง)
- * ตัดคำตามหลักภาษาไทย และใส่ "…" เมื่อยาวเกินจำนวนบรรทัดที่กำหนด
- * ความสูงคงที่ = จำนวนบรรทัดสูงสุด จึงทำให้การ์ดหนังสือทุกใบสูงเท่ากัน
- */
 final class TextBlock extends JComponent {
 
     private final String text;
@@ -31,22 +25,18 @@ final class TextBlock extends JComponent {
         setAlignmentX(Component.LEFT_ALIGNMENT);
     }
 
-    @Override
     public Dimension getPreferredSize() {
         return new Dimension(width, lineHeight(getFontMetrics(getFont())) * maxLines + 2);
     }
 
-    @Override
     public Dimension getMaximumSize() {
         return getPreferredSize();
     }
 
-    @Override
     public Dimension getMinimumSize() {
         return getPreferredSize();
     }
 
-    @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
         Theme.antialias(g2);
@@ -59,11 +49,6 @@ final class TextBlock extends JComponent {
         return fm.getAscent() + fm.getDescent() + 2;
     }
 
-    /**
-     * วาดข้อความแบบตัดบรรทัด
-     *
-     * @param top ตำแหน่ง y ของขอบบนของบรรทัดแรก
-     */
     static void drawLines(Graphics2D g2, String text, Font font, int x, int top, int width,
                           int maxLines, boolean center) {
         if (text == null || text.isEmpty()) {
@@ -104,7 +89,7 @@ final class TextBlock extends JComponent {
                 return layout;
             }
             candidate = candidate.substring(0, candidate.length() - 1);
-            // ไม่ทิ้งสระ/วรรณยุกต์ไว้ลอย ๆ ท้ายคำ
+            //ไม่ทิ้งสระ/วรรณยุกต์ไว้ลอย ๆ ท้ายคำ
             while (candidate.length() > 1
                     && Character.getType(candidate.charAt(candidate.length() - 1)) == Character.NON_SPACING_MARK) {
                 candidate = candidate.substring(0, candidate.length() - 1);

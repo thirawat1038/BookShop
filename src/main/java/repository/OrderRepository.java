@@ -16,26 +16,6 @@ import model.Order;
 import model.OrderItem;
 import model.Product;
 
-/**
- * AF(filePath, productRepository)
- * OrderRepository จัดการอ่าน/เขียนข้อมูล Order ลงไฟล์ CSV จริง
- * โดย filePath          = ตำแหน่งไฟล์ CSV ที่เก็บข้อมูลออเดอร์ (เช่น data/Orders.csv)
- *     productRepository = ใช้ค้นหา Product จริงด้วย productId ตอนประกอบ Order กลับจากไฟล์
- *                         (จำเป็นเพราะ OrderItem ต้องอ้างอิง Product object จริง ไม่ใช่แค่ id)
- *
- * รูปแบบไฟล์ CSV: บรรทัดแรกเป็น header
- *   "orderId,memberId,date,productId,productName,qty,subtotal"
- * 1 ออเดอร์อาจมีได้หลายบรรทัด (1 บรรทัดต่อ 1 รายการสินค้าในออเดอร์นั้น)
- * โดยบรรทัดที่มี orderId เดียวกันจะถูกรวมกลับเป็น Order เดียวกันตอนอ่าน
- *
- * หมายเหตุ: productName และ subtotal เก็บไว้เพื่อให้คนเปิดไฟล์อ่านเข้าใจง่าย
- * แต่ตอนอ่านกลับจะไม่ใช้ค่าที่เก็บไว้ตรง ๆ จะคำนวณ/ค้นหาใหม่จาก Product เสมอ
- * เพื่อไม่ให้ข้อมูลใน CSV ขัดแย้งกับข้อมูลสินค้าจริงถ้าราคาสินค้าถูกแก้ไขภายหลัง
- *
- * RI:
- *  - filePath ห้ามเป็น null หรือว่าง
- *  - productRepository ห้ามเป็น null
- */
 public class OrderRepository implements Repository<Order, String> {
 
     private static final String HEADER = "orderId,memberId,date,productId,productName,qty,subtotal";
@@ -43,12 +23,6 @@ public class OrderRepository implements Repository<Order, String> {
     private final Path filePath;
     private final ProductRepository productRepository;
 
-    /**
-     * สร้าง OrderRepository ที่ผูกกับไฟล์ CSV ตามที่ระบุ
-     *
-     * @param filePath          ตำแหน่งไฟล์ CSV ห้ามเป็น null หรือว่าง
-     * @param productRepository repository ของ Product ที่ใช้ค้นหาสินค้าตอนประกอบ Order กลับ ห้ามเป็น null
-     */
     public OrderRepository(String filePath, ProductRepository productRepository) {
         if (filePath == null || filePath.isBlank()) {
             throw new IllegalArgumentException("filePath ห้ามเป็น null หรือว่าง");
