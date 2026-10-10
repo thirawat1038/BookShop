@@ -1,7 +1,6 @@
 package model;
 
 public class MemberTest {
-
     public static void main(String[] args) {
         MemberTest test = new MemberTest();
 
@@ -54,14 +53,11 @@ public class MemberTest {
         assertEquals("0812345678", m.getPhone());
     }
 
-    // ---------- id ----------
-
     void testIdNullThrows() {
         try {
             new Member(null, "somchai01", "1234", "addr", "0812345678");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
 
@@ -70,23 +66,19 @@ public class MemberTest {
             new Member("  ", "somchai01", "1234", "addr", "0812345678");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
 
-    // ---------- username ----------
-
     void testUsernameTooShortThrows() {
         try {
-            new Member("M001", "abcde", "1234", "addr", "0812345678"); // 5 ตัว
+            new Member("M001", "abcde", "1234", "addr", "0812345678");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
 
     void testUsernameMinBoundaryOk() {
-        Member m = new Member("M001", "abcdef", "1234", "addr", "0812345678"); // 6 ตัว
+        Member m = new Member("M001", "abcdef", "1234", "addr", "0812345678");
         assertEquals("abcdef", m.getUsername());
     }
 
@@ -101,7 +93,6 @@ public class MemberTest {
             new Member("M001", "a".repeat(33), "1234", "addr", "0812345678");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
 
@@ -110,18 +101,14 @@ public class MemberTest {
             new Member("M001", null, "1234", "addr", "0812345678");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
-
-    // ---------- password ----------
 
     void testPasswordNullThrows() {
         try {
             new Member("M001", "somchai01", null, "addr", "0812345678");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
 
@@ -130,18 +117,14 @@ public class MemberTest {
             new Member("M001", "somchai01", "   ", "addr", "0812345678");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
-
-    // ---------- address ----------
 
     void testAddressNullThrows() {
         try {
             new Member("M001", "somchai01", "1234", null, "0812345678");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
 
@@ -150,7 +133,6 @@ public class MemberTest {
             new Member("M001", "somchai01", "1234", "", "0812345678");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
 
@@ -159,18 +141,14 @@ public class MemberTest {
             new Member("M001", "somchai01", "1234", "123 Sukhumvit, Bangkok", "0812345678");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
-
-    // ---------- phone ----------
 
     void testPhoneNineDigitsThrows() {
         try {
             new Member("M001", "somchai01", "1234", "addr", "081234567");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
 
@@ -179,7 +157,6 @@ public class MemberTest {
             new Member("M001", "somchai01", "1234", "addr", "08123456789");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
 
@@ -188,7 +165,6 @@ public class MemberTest {
             new Member("M001", "somchai01", "1234", "addr", "08123abcde");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
 
@@ -197,7 +173,6 @@ public class MemberTest {
             new Member("M001", "somchai01", "1234", "addr", "081-234-5678");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
 
@@ -206,11 +181,8 @@ public class MemberTest {
             new Member("M001", "somchai01", "1234", "addr", null);
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
-
-    // ---------- checkPassword ----------
 
     void testCheckPasswordCorrect() {
         assertEquals(true, valid().checkPassword("1234"));
@@ -223,8 +195,6 @@ public class MemberTest {
     void testCheckPasswordNullIsFalse() {
         assertEquals(false, valid().checkPassword(null));
     }
-
-    // ---------- equals / hashCode ----------
 
     void testEqualsSameId() {
         Member a = new Member("M001", "somchai01", "1234", "addr A", "0812345678");
@@ -244,8 +214,6 @@ public class MemberTest {
         assertEquals(a.hashCode(), b.hashCode());
     }
 
-    // ---------- CSV ----------
-
     void testCsvRoundTrip() {
         Member original = valid();
         Member restored = Member.fromCsvLine(original.toCsvLine());
@@ -258,14 +226,11 @@ public class MemberTest {
 
     void testFromCsvLineWrongColumnCountThrows() {
         try {
-            Member.fromCsvLine("M001,somchai01,1234,addr"); // มีแค่ 4 คอลัมน์
+            Member.fromCsvLine("M001,somchai01,1234,addr");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
-
-    // ---------- ตัวช่วยเทส (assertEquals overload) ----------
 
     private void assertEquals(String expected, String actual) {
         if (!expected.equals(actual)) {
