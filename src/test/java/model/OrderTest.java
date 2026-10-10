@@ -1,7 +1,6 @@
 package model;
 
 public class OrderTest {
-
     public static void main(String[] args) {
         OrderTest test = new OrderTest();
 
@@ -19,13 +18,6 @@ public class OrderTest {
         System.out.println("ทดสอบผ่านทั้งหมด");
     }
 
-    // ---------- Testing strategy: constructor ----------
-    // Partition:
-    //  - ค่าปกติครบทั้ง 3 ตัว -> สร้างได้ items ว่างเปล่า
-    //  - orderId เป็น null -> throw
-    //  - memberId เป็น null -> throw
-    //  - date เป็น null -> throw
-
     void testConstructorValid() {
         Order order = new Order("O001", "M001", "2026-10-04");
         assertEquals("O001", order.getOrderId());
@@ -39,7 +31,6 @@ public class OrderTest {
             new Order(null, "M001", "2026-10-04");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
 
@@ -48,7 +39,6 @@ public class OrderTest {
             new Order("O002", null, "2026-10-04");
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
 
@@ -57,20 +47,13 @@ public class OrderTest {
             new Order("O003", "M001", null);
             throw new AssertionError("ควร throw IllegalArgumentException แต่ไม่ throw");
         } catch (IllegalArgumentException e) {
-            // ผ่าน
         }
     }
 
-    // ---------- Testing strategy: addItem / getTotal ----------
-    // Partition:
-    //  - ยังไม่เพิ่มอะไรเลย -> getTotal ต้องเป็น 0
-    //  - เพิ่ม 1 รายการ -> getTotal ตรงกับ subtotal ของรายการนั้น
-    //  - เพิ่มหลายรายการ -> getTotal เป็นผลรวมทุกรายการ
-
     void testAddItemIncreasesItems() {
         Order order = new Order("O004", "M001", "2026-10-04");
-        Product p = new Product("P001", "น้ำดื่ม", 10.0, 50);
-        order.addItem(new OrderItem(p, 2));
+        Book p = new Book("P001", "น้ำดื่ม", 10.0, 50);
+        order.addItem(new OrderLine(p, 2));
         assertEquals(1, order.getItems().size());
     }
 
@@ -81,34 +64,29 @@ public class OrderTest {
 
     void testGetTotalSingleItem() {
         Order order = new Order("O006", "M001", "2026-10-04");
-        Product p = new Product("P001", "น้ำดื่ม", 10.0, 50);
-        order.addItem(new OrderItem(p, 3));
+        Book p = new Book("P001", "น้ำดื่ม", 10.0, 50);
+        order.addItem(new OrderLine(p, 3));
         assertEquals(30.0, order.getTotal());
     }
 
     void testGetTotalMultipleItems() {
         Order order = new Order("O007", "M001", "2026-10-04");
-        Product water = new Product("P001", "น้ำดื่ม", 10.0, 50);
-        Product bread = new Product("P002", "ขนมปัง", 25.0, 20);
-        order.addItem(new OrderItem(water, 2));   // 20.0
-        order.addItem(new OrderItem(bread, 1));   // 25.0
+        Book water = new Book("P001", "น้ำดื่ม", 10.0, 50);
+        Book bread = new Book("P002", "ขนมปัง", 25.0, 20);
+        order.addItem(new OrderLine(water, 2));
+        order.addItem(new OrderLine(bread, 1));
         assertEquals(45.0, order.getTotal());
     }
 
-    // ---------- Testing strategy: getItems ต้องแก้ไขไม่ได้จากภายนอก ----------
-
     void testGetItemsIsUnmodifiable() {
         Order order = new Order("O008", "M001", "2026-10-04");
-        Product p = new Product("P001", "น้ำดื่ม", 10.0, 50);
+        Book p = new Book("P001", "น้ำดื่ม", 10.0, 50);
         try {
-            order.getItems().add(new OrderItem(p, 1));
+            order.getItems().add(new OrderLine(p, 1));
             throw new AssertionError("ควร throw UnsupportedOperationException แต่ไม่ throw");
         } catch (UnsupportedOperationException e) {
-            // ผ่าน: getItems() ป้องกันการแก้ไขจากภายนอกถูกต้อง
         }
     }
-
-    // ---------- ตัวช่วยเทส (assertEquals overload) ----------
 
     private void assertEquals(String expected, String actual) {
         if (!expected.equals(actual)) {

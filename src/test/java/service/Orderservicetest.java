@@ -7,10 +7,10 @@ import java.util.Optional;
 import model.Order;
 import model.Product;
 
-public class OrderServiceTest {
+public class Orderservicetest {
 
     public static void main(String[] args) {
-        OrderServiceTest test = new OrderServiceTest();
+        Orderservicetest test = new Orderservicetest();
 
         test.testConstructorNullProductServiceThrows();
 
@@ -54,9 +54,6 @@ public class OrderServiceTest {
         return m;
     }
 
-    // ---------- Testing strategy: constructor ----------
-    // Partition:
-    //  - productService เป็น null -> throw
 
     void testConstructorNullProductServiceThrows() {
         try {
@@ -66,13 +63,6 @@ public class OrderServiceTest {
             // ผ่าน
         }
     }
-
-    // ---------- Testing strategy: createOrder (กรณีสำเร็จ) ----------
-    // Partition:
-    //  - สั่งสินค้า 1 รายการ -> ได้ Order ที่ถูกต้อง และบันทึกไว้
-    //  - สั่งแล้ว stock ต้องลดลงตามจำนวน
-    //  - สั่งหลายรายการ -> total เป็นผลรวม และตัดสต๊อกทุกชิ้น
-    //  - สั่งเท่ากับ stock ที่มีพอดี (boundary) -> สำเร็จ stock เหลือ 0
 
     void testCreateOrderValid() {
         OrderService os = new OrderService(newProductService());
@@ -116,16 +106,6 @@ public class OrderServiceTest {
 
         assertEquals(0, ps.getProductById("b03").get().getStock());
     }
-
-    // ---------- Testing strategy: createOrder (กรณีผิดพลาด) ----------
-    // Partition:
-    //  - รหัสไม่มีอยู่จริง -> throw IllegalArgumentException
-    //  - สต๊อกไม่พอ -> throw IllegalStateException และไม่บันทึกออเดอร์/ไม่ตัดสต๊อก
-    //  - หลายรายการ แต่รายการหลังมีปัญหา -> ต้องไม่ตัดสต๊อกรายการแรก (all-or-nothing)
-    //  - จำนวน 0 / ติดลบ -> throw
-    //  - Map ว่าง / null -> throw
-    //  - orderId ซ้ำ -> throw
-    //  - memberId เป็น null -> throw และไม่ตัดสต๊อก
 
     void testCreateOrderUnknownProductThrows() {
         OrderService os = new OrderService(newProductService());
@@ -233,11 +213,6 @@ public class OrderServiceTest {
         }
     }
 
-    // ---------- Testing strategy: getOrderById ----------
-    // Partition:
-    //  - id ที่มีอยู่ -> เจอออเดอร์นั้น
-    //  - id ที่ไม่มีอยู่ -> Optional.empty()
-
     void testGetOrderById() {
         OrderService os = new OrderService(newProductService());
         Order created = os.createOrder("O01", "M01", "2026-10-04", qty("b01", 1));
@@ -265,11 +240,6 @@ public class OrderServiceTest {
             // ผ่าน
         }
     }
-
-    // ---------- Testing strategy: getTotalSales ----------
-    // Partition:
-    //  - ยังไม่มีออเดอร์ -> 0.0
-    //  - มีหลายออเดอร์ -> ผลรวม total ของทุกออเดอร์
 
     void testGetTotalSalesEmptyIsZero() {
         OrderService os = new OrderService(newProductService());

@@ -2,7 +2,6 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Scanner;
-
 import model.Order;
 import model.OrderItem;
 import model.Product;
@@ -10,13 +9,6 @@ import repository.OrderRepository;
 import repository.ProductRepository;
 import service.OrderService;
 import service.ProductService;
-
-/**
- * จุดเริ่มต้นของโปรแกรม BookShop แบบเมนูคอนโซล
- * ใช้สาธิตว่าทุกชั้น (Model - Repository - Service) ทำงานร่วมกันได้จริง
- * ข้อมูลสินค้าอ่านจาก data/Products.csv และข้อมูลออเดอร์อ่านจาก data/Orders.csv
- * (รันโปรแกรมจาก root ของโปรเจกต์ ไม่งั้นจะหาไฟล์ data/ ไม่เจอ)
- */
 public class main {
 
     private static final String PRODUCT_FILE = "data/Products.csv";
@@ -25,10 +17,8 @@ public class main {
     public static void main(String[] args) {
         ProductRepository productRepository = new ProductRepository(PRODUCT_FILE);
         ProductService productService = new ProductService(productRepository);
-
         OrderRepository orderRepository = new OrderRepository(ORDER_FILE, productRepository);
         OrderService orderService = new OrderService(productService, orderRepository);
-
         Scanner scanner = new Scanner(System.in);
         boolean running = true;
 
@@ -106,7 +96,7 @@ public class main {
                 continue;
             }
             if (productService.getProductById(productId).isEmpty()) {
-                System.out.println("ไม่พบหนังสือรหัส " + productId);
+                System.out.println("ไม่พบหนังสือ " + productId);
                 continue;
             }
             System.out.print("จำนวน: ");

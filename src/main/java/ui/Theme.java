@@ -6,20 +6,13 @@ import java.awt.*;
 import java.util.Enumeration;
 import java.util.Locale;
 
-/**
- * ค่าสี/ฟอนต์กลางของ GUI และตัวแก้ปัญหาตัวอักษรไทยเพี้ยน
- *
- * สาเหตุที่ภาษาไทยเพี้ยนใน Swing: Look and Feel ของระบบมักเลือกฟอนต์ที่ไม่มีกลุ่มอักษรไทย
- * (เช่น Segoe UI / Dialog) ทำให้ Java ไปดึงฟอนต์สำรองมาผสมเป็นบางตัว
- * ผลคือวรรณยุกต์/สระบนล่างซ้อนกันผิดตำแหน่ง หรือสูงต่ำไม่เท่ากัน
- * วิธีแก้: เลือก "ฟอนต์ที่แสดงภาษาไทยได้จริง" แล้วบังคับใช้กับทุก component + เปิด anti-alias
- */
+
 final class Theme {
 
     private Theme() {
     }
 
-    // ---------- สี ----------
+    //สี ui
     static final Color PAGE_BG = new Color(0xF8F8F8);
     static final Color WHITE = Color.WHITE;
     static final Color LINE = new Color(0xD0D0D0);
@@ -30,7 +23,7 @@ final class Theme {
     static final Color LOGIN_BG = new Color(0xD9BCC1);
     static final Color LOGIN_BG_HOVER = new Color(0xCDA8AE);
 
-    /** ฟอนต์ที่เรียงตามลำดับความชอบ (Windows / macOS / Linux) */
+    //เรียงฟอนต์
     private static final String[] PREFERRED = {
             "Leelawadee UI", "Tahoma", "Noto Sans Thai", "Noto Sans Thai UI",
             "Sarabun", "TH Sarabun New", "Thonburi", "Ayuthaya",
@@ -41,7 +34,7 @@ final class Theme {
 
     private static String family = "Dialog";
 
-    /** เรียกก่อนสร้างหน้าต่างใด ๆ */
+    //เรียกใช้หน้าต้าง
     static void install() {
         System.setProperty("awt.useSystemAAFontSettings", "on");
         System.setProperty("swing.aatext", "true");
@@ -49,12 +42,11 @@ final class Theme {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ignored) {
-            // ใช้ look and feel เริ่มต้นแทน
         }
 
         family = pickThaiFamily();
 
-        // บังคับฟอนต์ไทยให้ทุก component (ปุ่ม ตาราง dialog ฯลฯ)
+        //บังคับฟอนต์ให้ใช้ไทย
         Enumeration<Object> keys = UIManager.getDefaults().keys();
         while (keys.hasMoreElements()) {
             Object key = keys.nextElement();
@@ -88,7 +80,7 @@ final class Theme {
                 }
             }
         }
-        // ไม่เจอในรายการ -> ไล่หาฟอนต์ใดก็ได้ในเครื่องที่แสดงภาษาไทยได้ครบ
+        // ไม่เจอรายการให้หาฟอนต์ใดก็ได้ในเครื่อง
         for (String name : installed) {
             if (supportsThai(name)) {
                 return name;

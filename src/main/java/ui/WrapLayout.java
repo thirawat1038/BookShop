@@ -1,12 +1,6 @@
 package ui;
-
 import javax.swing.*;
 import java.awt.*;
-
-/**
- * FlowLayout ที่ขึ้นบรรทัดใหม่ให้เองเมื่อความกว้างไม่พอ และรายงานความสูงจริงให้ parent
- * (FlowLayout ปกติจะรายงานว่าอยู่แถวเดียว ทำให้การ์ดหลุดขอบ/ถูกตัด)
- */
 final class WrapLayout extends FlowLayout {
 
     WrapLayout(int align, int hgap, int vgap) {

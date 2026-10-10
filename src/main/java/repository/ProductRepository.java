@@ -12,30 +12,12 @@ import java.util.List;
 
 import model.Product;
 
-/**
- * AF(filePath)
- * ProductRepository จัดการอ่าน/เขียนข้อมูล Product ลงไฟล์ CSV จริง
- * โดย filePath = ตำแหน่งไฟล์ CSV ที่เก็บข้อมูลสินค้า (เช่น data/Products.csv)
- *
- * รูปแบบไฟล์ CSV: บรรทัดแรกเป็น header "id,name,price,stock,imagePath,color"
- * บรรทัดถัดไปแต่ละบรรทัดคือ 1 Product ใช้ Product.toCsvLine()/fromCsvLine()
- * ที่เตรียมไว้ในคลาส Product อยู่แล้ว เพื่อไม่ให้ format การแปลงข้อมูลกระจัดกระจาย
- *
- * RI:
- *  - filePath ห้ามเป็น null หรือว่าง
- */
 public class ProductRepository implements Repository<Product, String> {
 
     private static final String HEADER = "id,name,price,stock,imagePath,color";
 
     private final Path filePath;
 
-    /**
-     * สร้าง ProductRepository ที่ผูกกับไฟล์ CSV ตามที่ระบุ
-     * ถ้าไฟล์ยังไม่มีอยู่ จะถูกสร้างขึ้นใหม่ (พร้อม header) ตอนเรียก findAll()/saveAll() ครั้งแรก
-     *
-     * @param filePath ตำแหน่งไฟล์ CSV ห้ามเป็น null หรือว่าง
-     */
     public ProductRepository(String filePath) {
         if (filePath == null || filePath.isBlank()) {
             throw new IllegalArgumentException("filePath ห้ามเป็น null หรือว่าง");
