@@ -1,8 +1,10 @@
 package service;
 
+import java.util.List;
 import java.util.Optional;
 
 import model.Product;
+import model.ProductType;
 
 public class ProductServiceTest {
 
@@ -28,8 +30,18 @@ public class ProductServiceTest {
 
         test.testGetAllProductsIsUnmodifiable();
 
-        System.out.println("ทดสอบผ่าน");
+        test.testGetProductsByTypeFiltersAndKeepsOrder();
+        test.testGetProductsByTypeNoneIsEmpty();
+        test.testGetProductsByTypeNullThrows();
+        test.testGetProductsByTypeIsUnmodifiable();
+
+        System.out.println("ทดสอบผ่านทั้งหมด");
     }
+
+    // ---------- Testing strategy: calculateTotalStockValue ----------
+    // Partition:
+    //  - มีสินค้าหลายชิ้น -> ผลรวมของ (ราคา x stock) ทุกชิ้น
+    //  - ไม่มีสินค้าเลย -> 0.0
 
     void testCalculateTotalStockValue() {
         ProductService service = new ProductService();
@@ -43,6 +55,12 @@ public class ProductServiceTest {
         ProductService service = new ProductService();
         assertEquals(0.0, service.calculateTotalStockValue());
     }
+
+    // ---------- Testing strategy: hasProductOutOfStock ----------
+    // Partition:
+    //  - มีสินค้าที่ stock = 0 อย่างน้อย 1 ชิ้น -> true
+    //  - ทุกชิ้น stock > 0 -> false
+    //  - ไม่มีสินค้าเลย -> false
 
     void testHasProductOutOfStock() {
         ProductService service = new ProductService();
@@ -63,6 +81,11 @@ public class ProductServiceTest {
         assertEquals(false, service.hasProductOutOfStock());
     }
 
+    // ---------- Testing strategy: getProductById ----------
+    // Partition:
+    //  - id ที่มีอยู่ -> เจอสินค้านั้น
+    //  - id ที่ไม่มีอยู่ -> Optional.empty()
+
     void testGetProductById() {
         ProductService service = new ProductService();
         Product book = new Product("b01", "book01", 150.0, 50);
@@ -80,6 +103,12 @@ public class ProductServiceTest {
         Optional<Product> result = service.getProductById("b99");
         assertEquals(true, result.isEmpty());
     }
+
+    // ---------- Testing strategy: addProduct ----------
+    // Partition:
+    //  - สินค้าปกติ -> เพิ่มได้ และค้นเจอ
+    //  - null -> throw
+    //  - id ซ้ำกับที่มีอยู่ -> throw และของเดิมไม่เปลี่ยน
 
     void testAddProduct() {
         ProductService service = new ProductService();
@@ -112,6 +141,11 @@ public class ProductServiceTest {
             assertEquals("book01", service.getProductById("b01").get().getName());
         }
     }
+
+    // ---------- Testing strategy: removeProduct ----------
+    // Partition:
+    //  - id ที่มีอยู่ -> ถูกลบออก
+    //  - id ที่ไม่มีอยู่ -> ไม่มีอะไรเปลี่ยน
 
     void testRemoveProduct() {
         ProductService service = new ProductService();
@@ -147,6 +181,50 @@ public class ProductServiceTest {
     }
 
     // ---------- ตัวช่วยเทส (assertEquals overload) ----------
+
+    // ---------- getProductsByType ----------
+
+    private ProductService mixedShop() {
+        ProductService ps = new ProductService();
+        ps.addProduct(new Product("b01", "book01", 150.0, 10));
+        ps.addProduct(new Product("e01", "ebook01", 99.0, 999, null, null, ProductType.EBOOK));
+        ps.addProduct(new Product("b02", "book02", 165.0, 5));
+        ps.addProduct(new Product("mg01", "mag01", 120.0, 50, null, null, ProductType.MAGAZINE));
+        return ps;
+    }
+
+    void testGetProductsByTypeFiltersAndKeepsOrder() {
+        ProductService ps = mixedShop();
+        List<Product> books = ps.getProductsByType(ProductType.BOOK);
+        assertEquals(2, books.size());
+        assertEquals("b01", books.get(0).getId());
+        assertEquals("b02", books.get(1).getId());
+
+        assertEquals(1, ps.getProductsByType(ProductType.EBOOK).size());
+        assertEquals("mg01", ps.getProductsByType(ProductType.MAGAZINE).get(0).getId());
+    }
+
+    void testGetProductsByTypeNoneIsEmpty() {
+        assertEquals(0, mixedShop().getProductsByType(ProductType.EMAGAZINE).size());
+    }
+
+    void testGetProductsByTypeNullThrows() {
+        try {
+            mixedShop().getProductsByType(null);
+            throw new AssertionError("ควร throw IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            // ผ่าน
+        }
+    }
+
+    void testGetProductsByTypeIsUnmodifiable() {
+        try {
+            mixedShop().getProductsByType(ProductType.BOOK).clear();
+            throw new AssertionError("ควร throw UnsupportedOperationException");
+        } catch (UnsupportedOperationException e) {
+            // ผ่าน
+        }
+    }
 
     private void assertEquals(String expected, String actual) {
         if (!expected.equals(actual)) {

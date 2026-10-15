@@ -27,6 +27,15 @@ public class ProductTest {
 
         test.testCsvRoundTrip();
 
+        test.testDefaultTypeIsBook();
+        test.testConstructorWithType();
+        test.testConstructorNullTypeThrows();
+        test.testCsvRoundTripKeepsType();
+        test.testFromCsvLineOldFormatsDefaultToBook();
+        test.testFromCsvLineTypeIsCaseInsensitive();
+        test.testFromCsvLineUnknownTypeThrows();
+        test.testProductTypeParse();
+
         System.out.println("ทดสอบผ่านทั้งหมด");
     }
 
@@ -157,6 +166,79 @@ public class ProductTest {
         assertEquals(original.getName(), restored.getName());
         assertEquals(original.getPrice(), restored.getPrice());
         assertEquals(original.getStock(), restored.getStock());
+    }
+
+    // ---------- type (ประเภทสินค้า) ----------
+
+    void testDefaultTypeIsBook() {
+        assertEquals(true, new Product("b01", "book01", 100.0, 5).getType() == ProductType.BOOK);
+        assertEquals(true, new Product("b01", "book01", 100.0, 5, "a.png", "#E57373").getType() == ProductType.BOOK);
+    }
+
+    void testConstructorWithType() {
+        Product p = new Product("e01", "ebook01", 99.0, 999, null, null, ProductType.EBOOK);
+        assertEquals(true, p.getType() == ProductType.EBOOK);
+        assertEquals("อีบุ๊ก", p.getType().getLabel());
+    }
+
+    void testConstructorNullTypeThrows() {
+        try {
+            new Product("e01", "ebook01", 99.0, 999, null, null, null);
+            throw new AssertionError("ควร throw IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            // ผ่าน
+        }
+    }
+
+    void testCsvRoundTripKeepsType() {
+        for (ProductType type : ProductType.values()) {
+            Product original = new Product("x01", "สินค้า", 10.5, 3, "data/image/x01.png", "#E57373", type);
+            Product restored = Product.fromCsvLine(original.toCsvLine());
+            assertEquals(true, restored.getType() == type);
+            assertEquals(original.getImagePath(), restored.getImagePath());
+            assertEquals(original.getColor(), restored.getColor());
+        }
+        assertEquals("e01,ebook01,99.0,999,,,EBOOK",
+                new Product("e01", "ebook01", 99.0, 999, null, null, ProductType.EBOOK).toCsvLine());
+    }
+
+    void testFromCsvLineOldFormatsDefaultToBook() {
+        // ไฟล์เก่าที่ไม่มีคอลัมน์ type (4, 5, 6 คอลัมน์) หรือเว้นว่างไว้ ต้องได้ BOOK
+        assertEquals(true, Product.fromCsvLine("b01,book01,150.0,50").getType() == ProductType.BOOK);
+        assertEquals(true, Product.fromCsvLine("b01,book01,150.0,50,a.png").getType() == ProductType.BOOK);
+        assertEquals(true, Product.fromCsvLine("b01,book01,150.0,50,a.png,#E57373").getType() == ProductType.BOOK);
+        assertEquals(true, Product.fromCsvLine("b01,book01,150.0,50,,,").getType() == ProductType.BOOK);
+    }
+
+    void testFromCsvLineTypeIsCaseInsensitive() {
+        assertEquals(true, Product.fromCsvLine("m01,mag,120.0,5,,, magazine ").getType() == ProductType.MAGAZINE);
+    }
+
+    void testFromCsvLineUnknownTypeThrows() {
+        try {
+            Product.fromCsvLine("b01,book01,150.0,50,,,COMIC");
+            throw new AssertionError("ควร throw IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            // ผ่าน
+        }
+    }
+
+    void testProductTypeParse() {
+        assertEquals(true, ProductType.parse("EBOOK") == ProductType.EBOOK);
+        assertEquals(true, ProductType.parse("emagazine") == ProductType.EMAGAZINE);
+        try {
+            ProductType.parse(null);
+            throw new AssertionError("ควร throw IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            // ผ่าน
+        }
+        // ชื่อแท็บในหน้าร้านมาจาก label ต้องไม่ว่างและไม่ซ้ำกัน
+        java.util.Set<String> labels = new java.util.HashSet<>();
+        for (ProductType type : ProductType.values()) {
+            assertEquals(true, !type.getLabel().isBlank());
+            labels.add(type.getLabel());
+        }
+        assertEquals(ProductType.values().length, labels.size());
     }
 
     // ---------- ตัวช่วยเทส (assertEquals overload) ----------

@@ -27,6 +27,8 @@ public class MemberRepositoryTest {
         test.run("testHeaderOnlyFileReturnsEmpty", test::testHeaderOnlyFileReturnsEmpty);
         test.run("testInvalidLineThrowsWithLineNumber", test::testInvalidLineThrowsWithLineNumber);
         test.run("testSixColumnLineIsRejected", test::testSixColumnLineIsRejected);
+        test.run("testRoleSavedAndLoaded", test::testRoleSavedAndLoaded);
+        test.run("testLegacyFileWithoutRoleLoadsAsMember", test::testLegacyFileWithoutRoleLoadsAsMember);
 
         System.out.println("ทดสอบผ่านทั้งหมด");
     }
@@ -192,5 +194,24 @@ public class MemberRepositoryTest {
             return;
         }
         throw new AssertionError("แถว 6 คอลัมน์ควรถูกปฏิเสธ");
+    }
+
+    void testRoleSavedAndLoaded() {
+        MemberRepository repo = new MemberRepository(file.toString());
+        repo.saveAll(java.util.List.of(
+                new Member("m01", "alice01", "pw1234", "Bangkok", "0811111111"),
+                new Member("m02", "bookadmin", "pw1234", "office", "0812345678", Member.Role.ADMIN)));
+        MemberRepository reloaded = new MemberRepository(file.toString());
+        assertTrue(!reloaded.findById("m01").isAdmin(), "m01 ควรเป็น MEMBER");
+        assertTrue(reloaded.findById("m02").isAdmin(), "m02 ควรเป็น ADMIN หลังโหลดจากไฟล์");
+    }
+
+    void testLegacyFileWithoutRoleLoadsAsMember() throws IOException {
+        Files.writeString(file,
+                "id,username,password,address,phone\n"
+                        + "m01,alice01,pw1234,Bangkok,0811111111\n",
+                StandardCharsets.UTF_8);
+        assertTrue(!new MemberRepository(file.toString()).findById("m01").isAdmin(),
+                "ไฟล์เก่าที่ไม่มี role ควรได้ MEMBER");
     }
 }

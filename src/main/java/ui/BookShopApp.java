@@ -17,6 +17,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.RoundRectangle2D;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -27,12 +28,23 @@ import model.Member;
 import model.Order;
 import model.OrderItem;
 import model.Product;
+import model.ProductType;
 import repository.MemberRepository;
 import repository.OrderRepository;
 import repository.ProductRepository;
+import service.DashboardService;
 import service.MemberService;
 import service.OrderService;
 import service.ProductService;
+
+/**
+ * หน้าต่าง GUI หลักของ BookShop "Online Book Ordering System" (Swing)
+ *
+ * หน้าตาตามแบบ: หัวเรื่องกลาง + ปุ่มเข้าสู่ระบบ / แท็บหมวด / ช่องค้นหา / แถวหนังสือแนะนำ
+ * ข้อมูลและ logic ธุรกิจทั้งหมดยังเรียกผ่าน ProductService / OrderService เดิม (ไม่แก้ชั้น model/service)
+ *
+ * รันจาก root ของโปรเจกต์ (โฟลเดอร์ที่มี data/ อยู่) ไม่งั้นจะหาไฟล์ CSV ไม่เจอ
+ */
 public class BookShopApp extends JFrame {
 
     private static final String PRODUCT_FILE = "data/Products.csv";
@@ -42,7 +54,9 @@ public class BookShopApp extends JFrame {
     // ระบบสมาชิก / ชำระเงิน ยังทำไม่เสร็จ -> ปิดไว้ก่อน (เปลี่ยนเป็น true เมื่อพร้อมใช้งาน)
     private static final boolean LOGIN_ENABLED = true;
     private static final boolean CHECKOUT_ENABLED = true;
-    private static final String[] TABS = {"หนังสือ", "อีบุ๊ก", "นิยายสาร", "อีแมกกาซีน"};
+    /** แท็บแต่ละอันตรงกับสินค้าประเภทหนึ่ง ตามลำดับของ ProductType (แท็บที่ i = ProductType.values()[i]) */
+    private static final String[] TABS = Arrays.stream(ProductType.values())
+            .map(ProductType::getLabel).toArray(String[]::new);
 
     private final ProductService productService;
     private final OrderService orderService;
@@ -61,6 +75,9 @@ public class BookShopApp extends JFrame {
     private int selectedTab = 0;
     private TabBar tabBar;
     private JPanel detailHolder;
+    private JPanel dashboardHolder;
+    private LinkButton dashboardButton;
+    private final DashboardService dashboardService;
 
     public BookShopApp() {
         super("BookShop - Online Book Ordering System");
@@ -70,6 +87,7 @@ public class BookShopApp extends JFrame {
         OrderRepository orderRepository = new OrderRepository(ORDER_FILE, productRepository);
         this.orderService = new OrderService(productService, orderRepository);
         this.memberService = loadMemberService();
+        this.dashboardService = new DashboardService(productService, orderService, memberService);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -87,7 +105,9 @@ public class BookShopApp extends JFrame {
         updateCartButton();
     }
 
+    // ==================================================================
     // ส่วนหัว + แท็บ + ค้นหา
+    // ==================================================================
 
     private JComponent buildHeader() {
         JPanel header = new JPanel(new BorderLayout());
@@ -106,11 +126,15 @@ public class BookShopApp extends JFrame {
         cartNavButton.addActionListener(e -> showCartDialog());
         LinkButton historyButton = new LinkButton("ประวัติสั่งซื้อ");
         historyButton.addActionListener(e -> showHistoryDialog());
+        dashboardButton = new LinkButton("แดชบอร์ด");
+        dashboardButton.setVisible(false); // โผล่เฉพาะตอนล็อกอินเป็น admin
+        dashboardButton.addActionListener(e -> showDashboard());
         loginButton = new PillButton("เข้าสู่ระบบ / สมัครสมาชิก", Theme.LOGIN_BG, Theme.LOGIN_BG_HOVER, Theme.TEXT);
         loginButton.setPreferredSize(new Dimension(230, 38));
         loginButton.addActionListener(e -> onLoginClicked());
         right.add(cartNavButton);
         right.add(historyButton);
+        right.add(dashboardButton);
         right.add(loginButton);
 
         // แถวบน: เมนูชิดขวา / แถวล่าง: ชื่อระบบอยู่กึ่งกลางหน้าต่างพอดี (ไม่ถูกเมนูเบียด)
@@ -179,29 +203,29 @@ public class BookShopApp extends JFrame {
         scroll.getViewport().setBackground(Theme.PAGE_BG);
         scroll.getVerticalScrollBar().setUnitIncrement(18);
 
-        // แท็บอื่นที่ยังไม่เปิดให้บริการ
-        JLabel soon = new JLabel("หมวดนี้ยังไม่เปิดให้บริการ", SwingConstants.CENTER);
-        soon.setFont(Theme.font(Font.PLAIN, 16f));
-        soon.setForeground(Theme.MUTED);
-
         centerLayout = new CardLayout();
         centerCards = new JPanel(centerLayout);
         centerCards.setOpaque(false);
         centerCards.add(scroll, "shop");
-        centerCards.add(soon, "soon");
         detailHolder = new JPanel(new BorderLayout());
         detailHolder.setBackground(Theme.PAGE_BG);
         centerCards.add(detailHolder, "detail");
+        dashboardHolder = new JPanel(new BorderLayout());
+        dashboardHolder.setBackground(Theme.PAGE_BG);
+        centerCards.add(dashboardHolder, "dashboard");
         body.add(centerCards, BorderLayout.CENTER);
         return body;
     }
 
+    // ==================================================================
     // สร้างรายการหนังสือ
+    // ==================================================================
 
     private void rebuildSections() {
         String query = searchField == null ? "" : searchField.getText().trim().toLowerCase(Locale.ROOT);
         List<Product> matches = new ArrayList<>();
-        for (Product p : productService.getAllProducts()) {
+        ProductType tabType = ProductType.values()[selectedTab];
+        for (Product p : productService.getProductsByType(tabType)) {
             if (query.isEmpty()
                     || p.getName().toLowerCase(Locale.ROOT).contains(query)
                     || p.getId().toLowerCase(Locale.ROOT).contains(query)) {
@@ -211,7 +235,7 @@ public class BookShopApp extends JFrame {
 
         sectionsPanel.removeAll();
         if (matches.isEmpty()) {
-            JLabel empty = new JLabel(query.isEmpty() ? "ยังไม่มีสินค้าในระบบ" : "ไม่พบหนังสือที่ค้นหา");
+            JLabel empty = new JLabel(query.isEmpty() ? "ยังไม่มีสินค้าในหมวดนี้" : "ไม่พบสินค้าที่ค้นหาในหมวดนี้");
             empty.setFont(Theme.font(Font.PLAIN, 15f));
             empty.setForeground(Theme.MUTED);
             empty.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -219,9 +243,9 @@ public class BookShopApp extends JFrame {
             sectionsPanel.add(empty);
         } else {
             int split = Math.min(ROW_SIZE, matches.size());
-            addSection("หนังสือแนะนำสำหรับคุณ", matches.subList(0, split));
+            addSection(tabType.getLabel() + "แนะนำสำหรับคุณ", matches.subList(0, split));
             if (split < matches.size()) {
-                addSection("หนังสือใหม่ติดเทรน", matches.subList(split, matches.size()));
+                addSection(tabType.getLabel() + "ใหม่ติดเทรน", matches.subList(split, matches.size()));
             }
         }
         sectionsPanel.add(Box.createVerticalGlue());
@@ -247,7 +271,9 @@ public class BookShopApp extends JFrame {
         sectionsPanel.add(row);
     }
 
+    // ==================================================================
     // ตะกร้า / สั่งซื้อ
+    // ==================================================================
 
     private void addToCart(Product product) {
         int alreadyInCart = 0;
@@ -486,7 +512,9 @@ public class BookShopApp extends JFrame {
         return table;
     }
 
+    // ==================================================================
     // เข้าสู่ระบบ
+    // ==================================================================
 
     private void onLoginClicked() {
         if (LOGIN_ENABLED) {
@@ -506,7 +534,16 @@ public class BookShopApp extends JFrame {
         if (choice == 0) {
             loggedInMember = null;
             updateLoginButton();
+            showShop(); // ถ้าอยู่หน้า dashboard ให้เด้งกลับ
         }
+    }
+
+    private boolean isAdmin() {
+        return loggedInMember != null && loggedInMember.isAdmin();
+    }
+
+    private void showShop() {
+        centerLayout.show(centerCards, "shop");
     }
 
     /** โหลดสมาชิกจาก member.csv ถ้าไฟล์ผิดรูปแบบจะแจ้งเตือนแล้วปิดโปรแกรม (ไม่เขียนทับไฟล์เดิม) */
@@ -522,10 +559,22 @@ public class BookShopApp extends JFrame {
         }
     }
 
+    /**
+     * ช่องรหัสผ่านที่แสดงตัวอักษรเป็นจุดดำ (●)
+     * ฟอนต์ไทยที่ Theme เลือกบางตัวไม่มีสัญลักษณ์ ● ทำให้ขึ้นเป็นสี่เหลี่ยม จึงใช้ฟอนต์ Dialog
+     * (ฟอนต์ของ Java ที่มีฟอนต์สำรองให้ครบ) เฉพาะช่องรหัสผ่าน
+     */
+    private static JPasswordField newPasswordField() {
+        JPasswordField field = new JPasswordField(18);
+        field.setFont(new Font(Font.DIALOG, Font.PLAIN, 14));
+        field.setEchoChar('\u25CF');
+        return field;
+    }
+
     /** @return true ถ้าเข้าสู่ระบบ (หรือสมัครแล้วเข้าสู่ระบบ) สำเร็จ */
     private boolean promptLogin() {
         JTextField usernameField = new JTextField(18);
-        JPasswordField passwordField = new JPasswordField(18);
+        JPasswordField passwordField = newPasswordField();
         JPanel form = new JPanel(new GridLayout(0, 1, 0, 6));
         form.add(new JLabel("ชื่อผู้ใช้ (username)"));
         form.add(usernameField);
@@ -562,8 +611,8 @@ public class BookShopApp extends JFrame {
     /** แสดงฟอร์มสมัครสมาชิก @return true ถ้าสมัครสำเร็จ (และเข้าสู่ระบบให้อัตโนมัติ) */
     private boolean promptRegister() {
         JTextField usernameField = new JTextField(18);
-        JPasswordField passwordField = new JPasswordField(18);
-        JPasswordField confirmField = new JPasswordField(18);
+        JPasswordField passwordField = newPasswordField();
+        JPasswordField confirmField = newPasswordField();
         JTextField addressField = new JTextField(18);
         JTextField phoneField = new JTextField(18);
 
@@ -620,20 +669,54 @@ public class BookShopApp extends JFrame {
 
     private void updateLoginButton() {
         loginButton.setText(loggedInMember == null ? "เข้าสู่ระบบ / สมัครสมาชิก" : "สมาชิก: " + loggedInMember.getUsername());
+        dashboardButton.setVisible(isAdmin());
+    }
+
+    // ==================================================================
+    // แดชบอร์ด admin
+    // ==================================================================
+
+    /** สร้างหน้า dashboard ใหม่ทุกครั้งที่เปิด (AdminDashboardPanel อ่านข้อมูล ณ ตอนสร้างเท่านั้น) */
+    private void showDashboard() {
+        if (!isAdmin()) {
+            return; // กันไว้อีกชั้น เผื่อถูกเรียกโดยไม่ใช่ admin
+        }
+        dashboardHolder.removeAll();
+
+        LinkButton back = new LinkButton("< ย้อนกลับ");
+        back.setForeground(Theme.MUTED);
+        back.addActionListener(e -> {
+            rebuildSections(); // สต๊อกอาจเปลี่ยน
+            showShop();
+        });
+        JPanel backRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 24, 8));
+        backRow.setOpaque(false);
+        backRow.add(back);
+
+        dashboardHolder.add(backRow, BorderLayout.NORTH);
+        dashboardHolder.add(new AdminDashboardPanel(dashboardService, orderService, memberService, productService), BorderLayout.CENTER);
+        dashboardHolder.revalidate();
+        dashboardHolder.repaint();
+        centerLayout.show(centerCards, "dashboard");
     }
 
     private void selectTab(int index) {
         selectedTab = index;
         tabBar.repaint();
-        centerLayout.show(centerCards, index == 0 ? "shop" : "soon");
+        rebuildSections(); // แสดงเฉพาะสินค้าประเภทของแท็บนี้
+        showShop();
     }
 
     private void showShopList() {
-        if (centerLayout != null && selectedTab == 0) {
-            centerLayout.show(centerCards, "shop");
+        if (centerLayout != null) {
+            showShop();
         }
     }
-      // หน้ารายละเอียดหนังสือ
+
+    // ==================================================================
+    // หน้ารายละเอียดหนังสือ
+    // ==================================================================
+
     private void showDetail(Product product) {
         // ใช้ข้อมูลล่าสุด (สต๊อกอาจเปลี่ยนหลังชำระเงิน)
         Product p = productService.getAllProducts().stream()
@@ -654,7 +737,7 @@ public class BookShopApp extends JFrame {
         info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
         info.add(new TextBlock(p.getName(), Theme.font(Font.BOLD, 16f), Theme.TEXT, infoW, 2));
         info.add(new TextBlock("รหัสสินค้า : " + p.getId(), Theme.font(Font.PLAIN, 12f), Theme.MUTED, infoW, 1));
-        info.add(new TextBlock("ประเภท : Books", Theme.font(Font.PLAIN, 12f), Theme.MUTED, infoW, 1));
+        info.add(new TextBlock("ประเภท : " + p.getType().getLabel(), Theme.font(Font.PLAIN, 12f), Theme.MUTED, infoW, 1));
         info.add(Box.createVerticalStrut(8));
 
         JLabel price = new JLabel(String.format(Locale.US, "%,.2f บาท", p.getPrice()));
@@ -718,9 +801,11 @@ public class BookShopApp extends JFrame {
         centerLayout.show(centerCards, "detail");
     }
 
+    // ==================================================================
     // Component ตกแต่งเอง
+    // ==================================================================
 
-    /** แถบแท็บ: หนังสือ • อีบุ๊ก • นิยายสาร • อีแมกกาซีน (แท็บที่เลือกมีเส้นใต้หนา) */
+    /** แถบแท็บ: หนังสือ • อีบุ๊ก • นิตยสาร • อีแมกกาซีน (ชื่อมาจาก ProductType) (แท็บที่เลือกมีเส้นใต้หนา) */
     private final class TabBar extends JComponent {
         TabBar() {
             setPreferredSize(new Dimension(100, 46));
@@ -933,31 +1018,37 @@ public class BookShopApp extends JFrame {
 
     /** panel ที่ยืดตามความกว้างของ viewport เพื่อให้การ์ดขึ้นบรรทัดใหม่ตามขนาดหน้าต่าง */
     private static final class ScrollablePanel extends JPanel implements Scrollable {
+        @Override
         public Dimension getPreferredScrollableViewportSize() {
             return getPreferredSize();
         }
+
+        @Override
         public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
             return 18;
         }
 
+        @Override
         public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
             return Math.max(40, (int) (visibleRect.height * 0.9));
         }
 
+        @Override
         public boolean getScrollableTracksViewportWidth() {
             return true;
         }
 
+        @Override
         public boolean getScrollableTracksViewportHeight() {
             return false;
         }
     }
 
-    // main
+    // ==================================================================
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            Theme.install(); //เปิดโปรแกรมแล้วสร้างหน้าต่าง
+            Theme.install(); // ต้องเรียกก่อนสร้างหน้าต่าง: ตั้งฟอนต์ไทย + anti-alias
             new BookShopApp().setVisible(true);
         });
     }

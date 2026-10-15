@@ -14,6 +14,7 @@ public class MemberServiceTest {
         MemberServiceTest test = new MemberServiceTest();
 
         test.testRegisterValid();
+        test.testRegisterAlwaysCreatesMember();
         test.testRegisterPasswordMismatchThrows();
         test.testRegisterNullConfirmThrows();
         test.testRegisterInvalidMemberThrows();
@@ -54,6 +55,12 @@ public class MemberServiceTest {
         Member m = service.register("m01", "alice01", "pw1234", "pw1234", "Bangkok", "0811111111");
         assertEquals("m01", m.getId());
         assertEquals(1, service.getAllMembers().size());
+    }
+
+    void testRegisterAlwaysCreatesMember() {
+        MemberService service = new MemberService();
+        Member m = service.register("m01", "alice01", "pw1234", "pw1234", "Bangkok", "0811111111");
+        assertTrue(!m.isAdmin(), "สมัครสมาชิกต้องได้ MEMBER เสมอ ห้ามเป็น ADMIN");
     }
 
     void testRegisterPasswordMismatchThrows() {
